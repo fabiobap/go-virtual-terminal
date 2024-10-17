@@ -1,7 +1,7 @@
 {{template "base" .}}
 
 {{define "title"}}
-Virtual Terminal
+    Virtual Terminal
 {{end}}
 
 {{define "content"}}
@@ -9,24 +9,27 @@ Virtual Terminal
 <hr>
 <div class="alert alert-danger text-center d-none" id="card-messages"></div>
 
-<form action="/payment-succeeded" method="post" name="charge_form" id="charge_form"
-    class="d-block needs-validation charge-form" autocomplete="off" novalidate="">
+<form action="/payment-succeeded" method="post"
+    name="charge_form" id="charge_form"
+    class="d-block needs-validation charge-form"
+    autocomplete="off" novalidate="">
 
     <div class="mb-3">
         <label for="amount" class="form-label">Amount</label>
-        <input type="text" class="form-control" id="amount" name="amount" required="" autocomplete="amount-new">
+        <input type="text" class="form-control" id="amount" name="amount"
+            required="" autocomplete="amount-new">
     </div>
 
     <div class="mb-3">
         <label for="cardholder-name" class="form-label">Cardholder Name</label>
-        <input type="text" class="form-control" id="cardholder-name" name="cardholder_name" required=""
-            autocomplete="cardholder-name-new">
+        <input type="text" class="form-control" id="cardholder-name" name="cardholder_name"
+            required="" autocomplete="cardholder-name-new">
     </div>
 
     <div class="mb-3">
         <label for="cardholder-email" class="form-label">Cardholder Email</label>
-        <input type="email" class="form-control" id="cardholder-email" name="cardholder_email" required=""
-            autocomplete="cardholder-email-new">
+        <input type="email" class="form-control" id="cardholder-email" name="email"
+            required="" autocomplete="cardholder-email-new">
     </div>
 
     <div class="mb-3">
@@ -55,16 +58,16 @@ Virtual Terminal
 {{end}}
 
 {{define "js"}}
-<script src="https://js.stripe.com/v3/"></script>
+    <script src="https://js.stripe.com/v3/"></script>
 
-<script>
+    <script>
     let card;
     let stripe;
     const cardMessages = document.getElementById("card-messages");
     const payButton = document.getElementById("pay-button");
     const processing = document.getElementById("processing-payment");
 
-    stripe = Stripe('pk');
+    stripe = Stripe({{.API}});
 
     function hidePayButton() {
         payButton.classList.add("d-none");
@@ -102,7 +105,7 @@ Virtual Terminal
         hidePayButton();
 
         let amountToCharge = String(parseFloat(document.getElementById("amount").value) * 100)
-
+        
         let payload = {
             amount: amountToCharge,
             currency: 'cad',
@@ -117,7 +120,7 @@ Virtual Terminal
             body: JSON.stringify(payload),
         }
 
-        fetch("http://localhost:4001/api/payment-intent", requestOptions)
+        fetch("{{index .StringMap "publishable_key"}}", requestOptions)
             .then(response => response.text())
             .then(response => {
                 let data;
@@ -130,12 +133,12 @@ Virtual Terminal
                                 name: document.getElementById("cardholder-name").value,
                             }
                         }
-                    }).then(function (result) {
+                    }).then(function(result) {
                         if (result.error) {
                             // card declined, or something went wrong with the card
                             showCardError(result.error.message);
                             showPayButtons();
-                        } else if (result.paymentIntent) {
+                        } else if(result.paymentIntent) {
                             if (result.paymentIntent.status === "succeeded") {
                                 // we have charged the card
                                 document.getElementById("payment_method").value = result.paymentIntent.payment_method_types[0];
@@ -144,7 +147,7 @@ Virtual Terminal
                                 document.getElementById("payment_currency").value = result.paymentIntent.currency;
                                 processing.classList.add("d-none");
                                 showCardSuccess();
-                                // would submit the form
+                                document.getElementById("charge_form").submit();
                             }
                         }
                     })
@@ -156,7 +159,7 @@ Virtual Terminal
             })
     }
 
-    (function () {
+    (function() {
         // create stripe & elements
         const elements = stripe.elements();
         const style = {
@@ -174,7 +177,7 @@ Virtual Terminal
         card.mount("#card-element");
 
         // check for input errors
-        card.addEventListener('change', function (event) {
+        card.addEventListener('change', function(event) {
             var displayError = document.getElementById("card-errors");
             if (event.error) {
                 displayError.classList.remove('d-none');
@@ -185,5 +188,5 @@ Virtual Terminal
             }
         });
     })();
-</script>
+    </script>
 {{end}}
